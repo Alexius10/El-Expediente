@@ -1,111 +1,244 @@
 <!DOCTYPE html>
-<html lang="es"><head><base target="_top"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>El Expediente</title>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>El Expediente</title>
 <style>
   *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:system-ui,Arial,sans-serif;color:#f0ecff;
   background:linear-gradient(#080a1e,#280e4a 55%,#0a0616);padding:22px 18px 40px}
   .w{max-width:520px;margin:0 auto} .peq{letter-spacing:.25em;font-size:12px;color:#d2c8f5;text-align:center}
   h1{font-size:34px;text-align:center;margin:6px 0 4px;color:#fff;text-shadow:3px 3px 0 #ff46c8}
-  .sub{text-align:center;color:#ff78d7;font-weight:700;letter-spacing:.15em;font-size:14px}
+  .sub{text-align:center;color:#ff78d7;font-weight:700;letter-spacing:.15em;font-size:14px;min-height:18px}
   .caja{background:rgba(0,0,0,.55);border:2px solid #ff46c8;border-radius:22px;padding:20px;margin-top:22px}
   label{display:block;font-size:14px;margin:10px 0 4px;color:#d2c8f5}
   input{width:100%;padding:13px;border-radius:12px;border:1px solid #6c5aa8;background:#14102a;color:#fff;font-size:16px}
   button,a.b{display:block;width:100%;margin-top:16px;padding:14px;border:0;border-radius:12px;background:#ff46c8;
-  color:#fff;font-weight:700;font-size:16px;text-align:center;text-decoration:none}
-  a.b.fin{background:#2fd08a;color:#06210f}
-  .err{color:#ff9aa8;margin-top:12px;min-height:20px;font-size:14px} .good{color:#7ff0b8;margin-top:14px;font-size:16px;font-weight:700}
+  color:#fff;font-weight:700;font-size:16px;text-align:center;text-decoration:none;cursor:pointer}
+  button:disabled{opacity:.5}
+  button.sec{background:transparent;border:1px solid #6c5aa8;color:#d2c8f5;font-weight:600;font-size:14px;padding:10px}
+  .err{color:#ff9aa8;margin-top:12px;min-height:20px;font-size:14px}
+  .good{color:#7ff0b8;margin-top:4px;margin-bottom:12px;font-size:17px;font-weight:700}
   .txt{font-size:19px;line-height:1.5}
   .cif{display:block;text-align:center;font-size:34px;font-weight:800;color:#ff78d7;letter-spacing:.12em;margin:8px 0}
   .esp{transform:scaleX(-1)} .nota{font-size:13px;color:#b9aee0;margin-top:12px;text-align:center}
+  .num{letter-spacing:.2em;font-size:12px;color:#ff78d7;font-weight:700}
+  .tit{font-size:24px;font-weight:800;margin:4px 0 14px;color:#fff}
+  .exp{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+  .chip{padding:10px 4px;border-radius:10px;border:1px dashed #6c5aa8;text-align:center;font-size:13px;font-weight:700;color:#6c5aa8;min-height:40px;display:flex;align-items:center;justify-content:center}
+  .chip.on{border:1px solid #ff46c8;background:rgba(255,70,200,.18);color:#fff}
+  .ayuda{margin-top:12px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.07);font-size:15px;line-height:1.45}
+  .rev{margin-top:16px;padding:16px;border-radius:14px;border:2px solid #7ff0b8;background:rgba(127,240,184,.1)}
+  .rev .num{color:#7ff0b8}
+  .frase{font-size:19px;line-height:2.1;margin-top:6px}
+  .slot{display:inline-block;width:auto;margin:0 2px;padding:2px 10px;min-width:76px;border-radius:8px;background:#14102a;border:2px dashed #6c5aa8;color:#fff;font-size:16px;font-weight:700}
+  .slot.fill{border:2px solid #ff46c8;background:rgba(255,70,200,.2)}
+  .slot.sel{border-color:#7ff0b8}
+  .banco{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .banco button{width:auto;margin:0;padding:10px 14px;font-size:15px}
+  .banco button.usado{opacity:.25}
   .sep{border-top:1px solid #6c5aa8;margin:18px 0 6px}
 </style></head><body><div class="w">
 <div class="peq">HALLOWEEN · EGO SPORT CENTER</div><h1>EL EXPEDIENTE</h1>
 <div class="sub" id="cab"></div>
+
 <div class="caja" id="entrada">
-  <div>Introduce tu código de investigador para abrir la pista.</div>
+  <div>Introduce tu código de investigador para abrir la zona.</div>
   <label for="c">Código</label><input id="c" autocomplete="off" autocapitalize="characters" placeholder="EXP-XXXX">
   <label for="m">Correo electrónico</label><input id="m" type="email" autocomplete="email" placeholder="el correo con el que te inscribiste">
-  <button id="bt" onclick="ir()">Abrir la pista</button><div class="err" id="err"></div>
+  <button id="bt" onclick="ir()">Abrir la zona</button><div class="err" id="err"></div>
   <div class="nota">Solo mayores de edad inscritos en el juego.</div>
 </div>
-<div class="caja" id="pista" style="display:none">
-  <div id="tx"></div>
-  <div class="nota" id="notaEsp" style="display:none">Léelo donde se refleja la verdad.</div>
-  <div id="fin" style="display:none"><div class="sep"></div><div id="txFin"></div></div>
-  <div id="resp"><label for="r">Tu respuesta</label><input id="r" autocomplete="off" placeholder="Escribe la respuesta">
-    <button id="bc" onclick="comprobar()">Comprobar respuesta</button><div class="err" id="err2"></div></div>
-  <div class="good" id="ok" style="display:none"></div>
-  <a class="b fin" id="fo" href="#" target="_top" style="display:none">Entregar el capítulo</a>
-  <div class="nota" id="prog"></div>
+
+<div id="juego" style="display:none">
+  <div class="caja">
+    <div class="num">TU EXPEDIENTE · <span id="expn"></span></div>
+    <div class="exp" id="exp"></div>
+  </div>
+
+  <div class="caja" id="bEnigma" style="display:none">
+    <div class="good" id="aviso" style="display:none"></div>
+    <div class="num" id="enum"></div>
+    <div class="tit" id="etit"></div>
+    <div id="ebox"></div>
+    <div class="nota" id="notaEsp" style="display:none">Léelo donde se refleja la verdad.</div>
+    <div id="ayudas"></div>
+    <button class="sec" id="bayuda" onclick="pedirAyuda()">Necesito una pista</button>
+    <div class="sep"></div>
+    <label for="r">Tu respuesta</label><input id="r" autocomplete="off" placeholder="Escribe la respuesta">
+    <button id="bc" onclick="comprobar()">Comprobar respuesta</button><div class="err" id="err2"></div>
+  </div>
+
+  <div class="caja" id="bZona" style="display:none">
+    <div class="good" id="avisoZ" style="display:none"></div>
+    <div class="tit" id="ztit"></div>
+    <div class="txt" id="ztxt"></div>
+    <div class="rev" id="rev" style="display:none"><div class="num">SIGUIENTE ZONA</div><div class="txt" id="revtx"></div></div>
+    <div class="nota">Cuando llegues a la siguiente zona, busca su QR y escanéalo para continuar.</div>
+  </div>
+
+  <div class="caja" id="bFinal" style="display:none">
+    <div class="good" id="avisoF" style="display:none"></div>
+    <div class="num">ENIGMA FINAL</div>
+    <div class="tit">Completa la frase</div>
+    <div class="txt">Coloca cada palabra de tu expediente en el hueco que le corresponde.</div>
+    <div class="frase" id="frase"></div>
+    <div class="banco" id="banco"></div>
+    <button id="bf" onclick="enviarFrase()" disabled>Cerrar el caso</button><div class="err" id="err3"></div>
+  </div>
+
+  <div class="caja" id="bFin" style="display:none">
+    <div class="num">CASO CERRADO</div>
+    <div class="tit">¡Enhorabuena, investigador!</div>
+    <div class="txt" id="fraseFin"></div>
+    <div class="sep"></div>
+    <div class="txt">Ya participas en el sorteo de la cena para dos. Te hemos enviado un correo de confirmación (revisa spam).</div>
+  </div>
 </div>
 </div><script>
 function $(i){return document.getElementById(i);}
 var API = 'https://script.google.com/macros/s/AKfycbzfrfs1tpdufhyinE88A9RSx4hYFfWO0Ckrm89PQyzW3VhpPAuyEsbzAPVMx0xflJWaJA/exec';
-var PID = (function(){ var p = new URLSearchParams(location.search).get('p') || ''; return /^[1-3]\.[1-3]$/.test(p) ? p : ''; })();
-var C = '', M = '', CUR = PID;
-$('cab').textContent = PID ? 'PISTA ' + PID : '';
+var ZONA = (function(){
+  var q = new URLSearchParams(location.search), z = q.get('z') || '';
+  if(!/^[1-3]$/.test(z)){ var m = /^([1-3])\.[1-3]$/.exec(q.get('p') || ''); z = m ? m[1] : ''; }
+  return z ? Number(z) : 0;
+})();
+var C = '', M = '', ST = null, FILL = [], SEL = 0;
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function llamar(cuerpo, ok, fallo){
   fetch(API, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(cuerpo), credentials:'omit', redirect:'follow'})
     .then(function(r){ return r.json(); }).then(ok).catch(fallo);
 }
-function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function pintar(texto, cif){
-  var h='';
-  texto.split('\n').forEach(function(l){
-    if(!l.trim()){h+='<div style="height:12px"></div>';return;}
-    h+= cif.indexOf(l.trim())>-1 ? '<span class="cif">'+esc(l)+'</span>' : '<div class="txt">'+esc(l)+'</div>';
-  });
-  return h;
-}
-var CIF = [];
-function render(est, acabaDeResolver){
-  $('prog').textContent = 'Pistas resueltas de este capítulo: '+est.hechas+' de '+est.total;
-  $('err2').textContent=''; $('r').value='';
-  var ok=$('ok'), fo=$('fo');
-  fo.style.display='none'; ok.style.display='none'; $('resp').style.display='none'; $('fin').style.display='none';
-  if(est.completo){
-    ok.style.display='block'; ok.textContent = acabaDeResolver ? '¡Correcto! Capítulo completo. Ya puedes entregarlo.' : 'Capítulo completo. Ya puedes entregarlo.';
-    fo.style.display='block'; fo.href=est.formulario;
-    fo.onclick=function(ev){ev.preventDefault(); window.open(est.formulario,'_top');};
-    return;
+try { C = localStorage.getItem('exp_c') || ''; M = localStorage.getItem('exp_m') || ''; $('c').value = C; $('m').value = M; } catch(e){}
+
+/* Cada tipo de enigma sabe dibujarse. Los puzzles nuevos se añaden aquí. */
+var TIPOS = {
+  texto: function(box, e){
+    var h = '';
+    e.texto.split('\n').forEach(function(l){
+      if(!l.trim()){ h += '<div style="height:12px"></div>'; return; }
+      h += l.indexOf('## ') === 0 ? '<span class="cif">'+esc(l.slice(3))+'</span>' : '<div class="txt">'+esc(l)+'</div>';
+    });
+    box.innerHTML = h;
   }
-  if(est.siguiente){
-    CUR = est.siguiente.id;
-    if(est.siguiente.final){
-      ok.style.display='block'; ok.textContent = acabaDeResolver ? '¡Correcto! Ya solo queda la pregunta final.' : 'Solo queda la pregunta final.';
-      $('txFin').innerHTML = pintar(est.siguiente.texto, CIF); $('fin').style.display='block';
-    } else if(acabaDeResolver){ ok.style.display='block'; ok.textContent='¡Correcto!'; }
-    $('resp').style.display='block';
-    return;
-  }
-  ok.style.display='block';
-  ok.textContent = (acabaDeResolver ? '¡Correcto! ' : 'Pista ya resuelta. ') + 'Te faltan '+(est.total-est.hechas)+' pista(s): busca las otras tarjetas de este capítulo.';
+};
+
+function ocultarBloques(){
+  ['bEnigma','bZona','bFinal','bFin'].forEach(function(i){ $(i).style.display='none'; });
+  ['aviso','avisoZ','avisoF'].forEach(function(i){ $(i).style.display='none'; });
 }
+function aviso(id, texto){ if(texto){ $(id).textContent = texto; $(id).style.display = 'block'; } }
+
+function pintar(st, texto){
+  ST = st;
+  $('cab').textContent = 'CAPÍTULO '+st.cap+' · '+st.zona.toUpperCase();
+  var h = '';
+  for(var n = 1; n <= 8; n++){
+    var w = null; st.palabras.forEach(function(x){ if(x.n === n) w = x.palabra; });
+    h += '<div class="chip'+(w?' on':'')+'">'+(w ? esc(w) : '· · ·')+'</div>';
+  }
+  $('exp').innerHTML = h; $('expn').textContent = st.palabras.length+' DE 8 PALABRAS';
+  ocultarBloques();
+  if(st.juegoCompleto){
+    $('fraseFin').textContent = st.fraseCompleta; $('bFin').style.display = 'block'; return;
+  }
+  if(st.frase){
+    $('bFinal').style.display = 'block'; aviso('avisoF', texto); verFinal(st.frase); return;
+  }
+  if(st.actual){
+    $('bEnigma').style.display = 'block'; aviso('aviso', texto); verEnigma(st.actual); return;
+  }
+  $('bZona').style.display = 'block'; aviso('avisoZ', texto);
+  $('ztit').textContent = 'Capítulo '+st.cap+' completado';
+  $('ztxt').textContent = 'Has resuelto todos los enigmas de esta zona.';
+  if(st.revela){ $('revtx').innerHTML = esc(st.revela).replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>'); $('rev').style.display = 'block'; }
+  else $('rev').style.display = 'none';
+}
+
+function verEnigma(e){
+  $('enum').textContent = 'ENIGMA '+e.num+' DE '+e.de; $('etit').textContent = e.titulo;
+  var box = $('ebox'); box.className = ''; box.innerHTML = '';
+  (TIPOS[e.tipo] || TIPOS.texto)(box, e);
+  if(e.modo === 'espejo'){ box.className = 'esp'; $('notaEsp').style.display = 'block'; } else $('notaEsp').style.display = 'none';
+  $('ayudas').innerHTML = e.ayudas.map(function(t, i){ return '<div class="ayuda"><b>Pista '+(i+1)+':</b> '+esc(t)+'</div>'; }).join('');
+  $('bayuda').style.display = e.masAyudas ? 'block' : 'none';
+  $('err2').textContent = ''; $('r').value = '';
+}
+
 function ir(){
-  var e=$('err'); e.textContent='';
-  if(!PID){e.textContent='Escanea el QR de una tarjeta para abrir su pista.';return;}
-  C=$('c').value.trim(); M=$('m').value.trim();
-  if(!C||!M){e.textContent='Rellena el código y el correo.';return;}
-  var b=$('bt'); b.disabled=true; b.textContent='Comprobando…';
-  llamar({a:'pista',c:C,m:M,id:PID},function(r){
-    b.disabled=false; b.textContent='Abrir la pista';
-    if(!r.ok){e.textContent=r.msg;return;}
-    CIF=r.cifrados||[];
-    var tx=$('tx'); tx.innerHTML=pintar(r.texto, CIF);
-    if(r.modo==='espejo'){tx.className='esp';$('notaEsp').style.display='block';}
-    $('cab').textContent='CAPÍTULO '+r.cap+' · PISTA '+r.id+' · '+r.zona;
-    $('entrada').style.display='none'; $('pista').style.display='block';
-    render(r.estado,false);
-  },function(){b.disabled=false;b.textContent='Abrir la pista';e.textContent='No se pudo comprobar. Inténtalo de nuevo.';});
+  var e = $('err'); e.textContent = '';
+  if(!ZONA){ e.textContent = 'Escanea el QR de una zona para abrir su capítulo.'; return; }
+  C = $('c').value.trim(); M = $('m').value.trim();
+  if(!C || !M){ e.textContent = 'Rellena el código y el correo.'; return; }
+  var b = $('bt'); b.disabled = true; b.textContent = 'Comprobando…';
+  llamar({a:'zona', c:C, m:M, z:ZONA}, function(r){
+    b.disabled = false; b.textContent = 'Abrir la zona';
+    if(!r.ok){ e.textContent = r.msg; return; }
+    try { localStorage.setItem('exp_c', C); localStorage.setItem('exp_m', M); } catch(x){}
+    $('entrada').style.display = 'none'; $('juego').style.display = 'block';
+    pintar(r.estado);
+  }, function(){ b.disabled = false; b.textContent = 'Abrir la zona'; e.textContent = 'No se pudo comprobar. Inténtalo de nuevo.'; });
 }
+
 function comprobar(){
-  var e=$('err2'); e.textContent='';
-  var v=$('r').value.trim(); if(!v){e.textContent='Escribe tu respuesta.';return;}
-  var b=$('bc'); b.disabled=true; b.textContent='Comprobando…';
-  llamar({a:'resp',c:C,m:M,id:CUR,v:v},function(r){
-    b.disabled=false; b.textContent='Comprobar respuesta';
-    if(!r.ok){e.textContent=r.msg;return;}
-    if(!r.correcta){e.textContent='Respuesta incorrecta. Inténtalo de nuevo ('+r.quedan+' intentos restantes).';return;}
-    render(r.estado,true);
-  },function(){b.disabled=false;b.textContent='Comprobar respuesta';e.textContent='No se pudo comprobar. Inténtalo de nuevo.';});
+  var e = $('err2'); e.textContent = '';
+  var v = $('r').value.trim(); if(!v){ e.textContent = 'Escribe tu respuesta.'; return; }
+  var b = $('bc'); b.disabled = true; b.textContent = 'Comprobando…';
+  llamar({a:'resp', c:C, m:M, id:ST.actual.id, v:v}, function(r){
+    b.disabled = false; b.textContent = 'Comprobar respuesta';
+    if(!r.ok){ e.textContent = r.msg; return; }
+    if(!r.correcta){
+      pintar(r.estado); $('err2').textContent = 'Respuesta incorrecta. Inténtalo de nuevo ('+r.quedan+' intentos restantes).'; return;
+    }
+    pintar(r.estado, r.palabra ? '¡Correcto! Palabra '+r.palabra.n+' de 8: '+r.palabra.palabra : '¡Correcto!');
+    window.scrollTo(0, 0);
+  }, function(){ b.disabled = false; b.textContent = 'Comprobar respuesta'; e.textContent = 'No se pudo comprobar. Inténtalo de nuevo.'; });
+}
+
+function pedirAyuda(){
+  var b = $('bayuda'); b.disabled = true;
+  llamar({a:'ayuda', c:C, m:M, id:ST.actual.id}, function(r){
+    b.disabled = false;
+    if(!r.ok){ $('err2').textContent = r.msg; return; }
+    pintar(r.estado);
+  }, function(){ b.disabled = false; $('err2').textContent = 'No se pudo comprobar. Inténtalo de nuevo.'; });
+}
+
+/* ---------- Enigma final: frase con 8 huecos ---------- */
+function verFinal(f){
+  FILL = []; SEL = 0; $('err3').textContent = '';
+  var partes = f.plantilla.split(/\{(\d)\}/), h = '';
+  partes.forEach(function(p, i){
+    if(i % 2 === 0){ h += esc(p); return; }
+    var sig = partes[i + 1] || '', pun = /^[.,;:!?]+/.exec(sig);
+    if(pun) partes[i + 1] = sig.slice(pun[0].length);
+    h += '<span style="white-space:nowrap"><button class="slot" id="s'+p+'" onclick="tocarSlot('+p+')"></button>'+(pun ? esc(pun[0]) : '')+'</span>';
+  });
+  $('frase').innerHTML = h;
+  $('banco').innerHTML = f.banco.map(function(w, i){ return '<button id="w'+i+'" onclick="usarPalabra('+i+')">'+esc(w)+'</button>'; }).join('');
+  refrescarFinal();
+}
+function refrescarFinal(){
+  var banco = ST.frase.banco, usadas = {}, llenos = 0;
+  for(var i = 1; i <= 8; i++){
+    var s = $('s'+i), w = FILL[i];
+    s.textContent = w ? w : '·····'; s.className = 'slot' + (w ? ' fill' : '') + (SEL === i ? ' sel' : '');
+    if(w){ usadas[w] = true; llenos++; }
+  }
+  banco.forEach(function(w, k){ $('w'+k).className = usadas[w] ? 'usado' : ''; $('w'+k).disabled = !!usadas[w]; });
+  $('bf').disabled = llenos < 8;
+}
+function usarPalabra(k){
+  var w = ST.frase.banco[k], i = SEL && !FILL[SEL] ? SEL : 0;
+  if(!i){ for(var j = 1; j <= 8; j++){ if(!FILL[j]){ i = j; break; } } }
+  if(!i) return;
+  FILL[i] = w; SEL = 0; refrescarFinal();
+}
+function tocarSlot(i){ if(FILL[i]) FILL[i] = null; SEL = i; refrescarFinal(); }
+function enviarFrase(){
+  var e = $('err3'); e.textContent = '';
+  var b = $('bf'); b.disabled = true; b.textContent = 'Comprobando…';
+  llamar({a:'frase', c:C, m:M, v:FILL.slice(1, 9)}, function(r){
+    b.textContent = 'Cerrar el caso';
+    if(!r.ok){ b.disabled = false; e.textContent = r.msg; return; }
+    if(!r.correcta){ b.disabled = false; e.textContent = 'La frase no es correcta. Revisa qué palabra encaja en cada hueco ('+r.quedan+' intentos restantes).'; return; }
+    pintar(r.estado); window.scrollTo(0, 0);
+  }, function(){ b.disabled = false; b.textContent = 'Cerrar el caso'; e.textContent = 'No se pudo comprobar. Inténtalo de nuevo.'; });
 }
 </script></body></html>

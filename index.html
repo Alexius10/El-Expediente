@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es"><head><base target="_top"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>El Expediente</title>
+<style>
+  *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:system-ui,Arial,sans-serif;color:#f0ecff;
+  background:linear-gradient(#080a1e,#280e4a 55%,#0a0616);padding:22px 18px 40px}
+  .w{max-width:520px;margin:0 auto} .peq{letter-spacing:.25em;font-size:12px;color:#d2c8f5;text-align:center}
+  h1{font-size:34px;text-align:center;margin:6px 0 4px;color:#fff;text-shadow:3px 3px 0 #ff46c8}
+  .sub{text-align:center;color:#ff78d7;font-weight:700;letter-spacing:.15em;font-size:14px}
+  .caja{background:rgba(0,0,0,.55);border:2px solid #ff46c8;border-radius:22px;padding:20px;margin-top:22px}
+  label{display:block;font-size:14px;margin:10px 0 4px;color:#d2c8f5}
+  input{width:100%;padding:13px;border-radius:12px;border:1px solid #6c5aa8;background:#14102a;color:#fff;font-size:16px}
+  button,a.b{display:block;width:100%;margin-top:16px;padding:14px;border:0;border-radius:12px;background:#ff46c8;
+  color:#fff;font-weight:700;font-size:16px;text-align:center;text-decoration:none}
+  a.b.fin{background:#2fd08a;color:#06210f}
+  .err{color:#ff9aa8;margin-top:12px;min-height:20px;font-size:14px} .good{color:#7ff0b8;margin-top:14px;font-size:16px;font-weight:700}
+  .txt{font-size:19px;line-height:1.5}
+  .cif{display:block;text-align:center;font-size:34px;font-weight:800;color:#ff78d7;letter-spacing:.12em;margin:8px 0}
+  .esp{transform:scaleX(-1)} .nota{font-size:13px;color:#b9aee0;margin-top:12px;text-align:center}
+  .sep{border-top:1px solid #6c5aa8;margin:18px 0 6px}
+</style></head><body><div class="w">
+<div class="peq">HALLOWEEN · EGO SPORT CENTER</div><h1>EL EXPEDIENTE</h1>
+<div class="sub" id="cab"></div>
+<div class="caja" id="entrada">
+  <div>Introduce tu código de investigador para abrir la pista.</div>
+  <label for="c">Código</label><input id="c" autocomplete="off" autocapitalize="characters" placeholder="EXP-XXXX">
+  <label for="m">Correo electrónico</label><input id="m" type="email" autocomplete="email" placeholder="el correo con el que te inscribiste">
+  <button id="bt" onclick="ir()">Abrir la pista</button><div class="err" id="err"></div>
+  <div class="nota">Solo mayores de edad inscritos en el juego.</div>
+</div>
+<div class="caja" id="pista" style="display:none">
+  <div id="tx"></div>
+  <div class="nota" id="notaEsp" style="display:none">Léelo donde se refleja la verdad.</div>
+  <div id="fin" style="display:none"><div class="sep"></div><div id="txFin"></div></div>
+  <div id="resp"><label for="r">Tu respuesta</label><input id="r" autocomplete="off" placeholder="Escribe la respuesta">
+    <button id="bc" onclick="comprobar()">Comprobar respuesta</button><div class="err" id="err2"></div></div>
+  <div class="good" id="ok" style="display:none"></div>
+  <a class="b fin" id="fo" href="#" target="_top" style="display:none">Entregar el capítulo</a>
+  <div class="nota" id="prog"></div>
+</div>
+</div><script>
+function $(i){return document.getElementById(i);}
+var API = 'https://script.google.com/macros/s/AKfycbzfrfs1tpdufhyinE88A9RSx4hYFfWO0Ckrm89PQyzW3VhpPAuyEsbzAPVMx0xflJWaJA/exec';
+var PID = (function(){ var p = new URLSearchParams(location.search).get('p') || ''; return /^[1-3]\.[1-3]$/.test(p) ? p : ''; })();
+var C = '', M = '', CUR = PID;
+$('cab').textContent = PID ? 'PISTA ' + PID : '';
+function llamar(cuerpo, ok, fallo){
+  fetch(API, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(cuerpo), credentials:'omit', redirect:'follow'})
+    .then(function(r){ return r.json(); }).then(ok).catch(fallo);
+}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function pintar(texto, cif){
+  var h='';
+  texto.split('\n').forEach(function(l){
+    if(!l.trim()){h+='<div style="height:12px"></div>';return;}
+    h+= cif.indexOf(l.trim())>-1 ? '<span class="cif">'+esc(l)+'</span>' : '<div class="txt">'+esc(l)+'</div>';
+  });
+  return h;
+}
+var CIF = [];
+function render(est, acabaDeResolver){
+  $('prog').textContent = 'Pistas resueltas de este capítulo: '+est.hechas+' de '+est.total;
+  $('err2').textContent=''; $('r').value='';
+  var ok=$('ok'), fo=$('fo');
+  fo.style.display='none'; ok.style.display='none'; $('resp').style.display='none'; $('fin').style.display='none';
+  if(est.completo){
+    ok.style.display='block'; ok.textContent = acabaDeResolver ? '¡Correcto! Capítulo completo. Ya puedes entregarlo.' : 'Capítulo completo. Ya puedes entregarlo.';
+    fo.style.display='block'; fo.href=est.formulario;
+    fo.onclick=function(ev){ev.preventDefault(); window.open(est.formulario,'_top');};
+    return;
+  }
+  if(est.siguiente){
+    CUR = est.siguiente.id;
+    if(est.siguiente.final){
+      ok.style.display='block'; ok.textContent = acabaDeResolver ? '¡Correcto! Ya solo queda la pregunta final.' : 'Solo queda la pregunta final.';
+      $('txFin').innerHTML = pintar(est.siguiente.texto, CIF); $('fin').style.display='block';
+    } else if(acabaDeResolver){ ok.style.display='block'; ok.textContent='¡Correcto!'; }
+    $('resp').style.display='block';
+    return;
+  }
+  ok.style.display='block';
+  ok.textContent = (acabaDeResolver ? '¡Correcto! ' : 'Pista ya resuelta. ') + 'Te faltan '+(est.total-est.hechas)+' pista(s): busca las otras tarjetas de este capítulo.';
+}
+function ir(){
+  var e=$('err'); e.textContent='';
+  if(!PID){e.textContent='Escanea el QR de una tarjeta para abrir su pista.';return;}
+  C=$('c').value.trim(); M=$('m').value.trim();
+  if(!C||!M){e.textContent='Rellena el código y el correo.';return;}
+  var b=$('bt'); b.disabled=true; b.textContent='Comprobando…';
+  llamar({a:'pista',c:C,m:M,id:PID},function(r){
+    b.disabled=false; b.textContent='Abrir la pista';
+    if(!r.ok){e.textContent=r.msg;return;}
+    CIF=r.cifrados||[];
+    var tx=$('tx'); tx.innerHTML=pintar(r.texto, CIF);
+    if(r.modo==='espejo'){tx.className='esp';$('notaEsp').style.display='block';}
+    $('cab').textContent='CAPÍTULO '+r.cap+' · PISTA '+r.id+' · '+r.zona;
+    $('entrada').style.display='none'; $('pista').style.display='block';
+    render(r.estado,false);
+  },function(){b.disabled=false;b.textContent='Abrir la pista';e.textContent='No se pudo comprobar. Inténtalo de nuevo.';});
+}
+function comprobar(){
+  var e=$('err2'); e.textContent='';
+  var v=$('r').value.trim(); if(!v){e.textContent='Escribe tu respuesta.';return;}
+  var b=$('bc'); b.disabled=true; b.textContent='Comprobando…';
+  llamar({a:'resp',c:C,m:M,id:CUR,v:v},function(r){
+    b.disabled=false; b.textContent='Comprobar respuesta';
+    if(!r.ok){e.textContent=r.msg;return;}
+    if(!r.correcta){e.textContent='Respuesta incorrecta. Inténtalo de nuevo ('+r.quedan+' intentos restantes).';return;}
+    render(r.estado,true);
+  },function(){b.disabled=false;b.textContent='Comprobar respuesta';e.textContent='No se pudo comprobar. Inténtalo de nuevo.';});
+}
+</script></body></html>

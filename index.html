@@ -34,6 +34,31 @@
   .banco button{width:auto;margin:0;padding:10px 14px;font-size:15px}
   .banco button.usado{opacity:.25}
   .sep{border-top:1px solid #6c5aa8;margin:18px 0 6px}
+  .rueda{margin-top:16px;padding:12px;border:1px dashed #6c5aa8;border-radius:12px}
+  .tt{font-size:12px;letter-spacing:.15em;color:#ff78d7;font-weight:700;text-align:center;margin-bottom:8px}
+  .rg{display:grid;grid-template-columns:repeat(13,1fr);gap:2px;text-align:center;font-size:13px;font-weight:700;margin-bottom:8px}
+  .rg div{padding:5px 0;border-radius:4px}
+  .rg .t{background:rgba(255,255,255,.09);color:#d2c8f5} .rg .b{background:rgba(255,70,200,.22);color:#fff}
+  .rctl{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:6px}
+  .rctl button{width:52px;margin:0;padding:8px;font-size:20px}
+  .rctl b{min-width:120px;text-align:center;font-size:15px}
+  .sopalista{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 8px}
+  .sopalista span{padding:4px 8px;border-radius:8px;background:rgba(255,255,255,.09);font-size:12px;font-weight:700;letter-spacing:.05em}
+  .sopalista span.hecha{text-decoration:line-through;opacity:.5;background:rgba(127,240,184,.18)}
+  .sopa{display:grid;gap:2px;touch-action:none;user-select:none;-webkit-user-select:none;margin:8px 0}
+  .sc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;background:rgba(255,255,255,.07);border-radius:6px}
+  .sc.sel{background:#ff46c8;color:#fff} .sc.ok{background:rgba(127,240,184,.38);color:#fff}
+  .desl{display:block;width:100%;max-width:360px;margin:14px auto 6px;border-radius:12px;border:2px solid #6c5aa8;cursor:pointer;touch-action:manipulation}
+  .cuaderno,.candado{margin-top:16px;padding:12px;border:1px dashed #6c5aa8;border-radius:12px}
+  .cg{display:grid;gap:4px;align-items:center}
+  .cn{font-size:14px;font-weight:700} .ch{text-align:center;font-size:12px;color:#d2c8f5}
+  .cc{width:auto;margin:0;padding:0;height:40px;font-size:18px;background:rgba(255,255,255,.07);border:1px solid #6c5aa8;border-radius:8px;color:#fff;font-weight:700}
+  .cc.x{color:#ff9aa8;background:rgba(255,100,120,.14)} .cc.v{color:#7ff0b8;background:rgba(127,240,184,.18)}
+  .cr{display:flex;gap:10px;justify-content:center}
+  .rd{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .rd button{width:56px;margin:0;padding:8px 0;font-size:16px}
+  .rv{font-size:26px;font-weight:800;min-width:56px;text-align:center;background:#14102a;border:1px solid #6c5aa8;border-radius:8px;padding:6px 0}
+  .rl{font-size:20px;font-weight:800;color:#ff78d7}
 </style></head><body><div class="w">
 <div class="peq">HALLOWEEN · EGO SPORT CENTER</div><h1>EL EXPEDIENTE</h1>
 <div class="sub" id="cab"></div>
@@ -116,8 +141,146 @@ var TIPOS = {
       h += l.indexOf('## ') === 0 ? '<span class="cif">'+esc(l.slice(3))+'</span>' : '<div class="txt">'+esc(l)+'</div>';
     });
     box.innerHTML = h;
+  },
+  cesar: function(box, e){
+    TIPOS.texto(box, e);
+    var ABC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', n = 0, d = document.createElement('div');
+    d.className = 'rueda';
+    d.innerHTML = '<div class="tt">RUEDA DE CIFRADO</div><div id="rg1" class="rg"></div><div id="rg2" class="rg"></div>' +
+      '<div class="rctl"><button type="button" id="rm" aria-label="Restar uno">−</button><b id="rn"></b><button type="button" id="rp" aria-label="Sumar uno">+</button></div>' +
+      '<div class="nota">Cada letra de la fila de abajo está ese número de lugares más adelante (o más atrás, si es negativo) que la de arriba.</div>';
+    box.appendChild(d);
+    function pintar(){
+      [0, 1].forEach(function(k){
+        var t = '', b = '';
+        for(var i = 13 * k; i < 13 * k + 13; i++){ t += '<div class="t">'+ABC[i]+'</div>'; }
+        for(var j = 13 * k; j < 13 * k + 13; j++){ b += '<div class="b">'+ABC[((j + n) % 26 + 26) % 26]+'</div>'; }
+        $('rg'+(k + 1)).innerHTML = t + b;
+      });
+      $('rn').textContent = 'Desplazamiento: ' + (n > 0 ? '+' + n : n);
+    }
+    $('rm').onclick = function(){ n = n <= -25 ? 25 : n - 1; pintar(); };
+    $('rp').onclick = function(){ n = n >= 25 ? -25 : n + 1; pintar(); };
+    pintar();
+  },
+  sopa: function(box, e){
+    TIPOS.texto(box, e);
+    var D = e.datos, N = D.rejilla.length, sel = [], ini = null, hechas = {}, w = document.createElement('div');
+    var t = '<div class="sopalista">' + D.lista.map(function(p){ return '<span data-p="'+p+'">'+p+'</span>'; }).join('') + '</div><div class="sopa" style="grid-template-columns:repeat('+N+',1fr)">';
+    for(var r = 0; r < N; r++) for(var c = 0; c < N; c++) t += '<div class="sc" data-r="'+r+'" data-c="'+c+'">'+D.rejilla[r][c]+'</div>';
+    t += '</div><div class="nota sm">Arrastra el dedo sobre las letras para marcar una palabra.</div>';
+    w.innerHTML = t; box.appendChild(w);
+    var sg = w.querySelector('.sopa'), sm = w.querySelector('.sm');
+    function celda(r, c){ return sg.children[r * N + c]; }
+    function bajo(ev){ var el = document.elementFromPoint(ev.clientX, ev.clientY); return el && el.classList && el.classList.contains('sc') ? el : null; }
+    function pintarSel(){ for(var i = 0; i < sg.children.length; i++) sg.children[i].classList.remove('sel'); sel.forEach(function(p){ celda(p[0], p[1]).classList.add('sel'); }); }
+    function linea(a, b){
+      var dr = b[0] - a[0], dc = b[1] - a[1];
+      if(dr !== 0 && dc !== 0 && Math.abs(dr) !== Math.abs(dc)) return;
+      var n = Math.max(Math.abs(dr), Math.abs(dc)), sr = Math.sign(dr), sc = Math.sign(dc), out = [];
+      for(var i = 0; i <= n; i++) out.push([a[0] + sr * i, a[1] + sc * i]);
+      sel = out; pintarSel();
+    }
+    function fin(){
+      if(!ini) return;
+      var s = sel.map(function(p){ return D.rejilla[p[0]][p[1]]; }).join(''), rv = s.split('').reverse().join(''), pal = null;
+      D.lista.forEach(function(p){ if(p === s || p === rv) pal = p; });
+      if(pal && !hechas[pal]){
+        hechas[pal] = true;
+        sel.forEach(function(p){ celda(p[0], p[1]).classList.add('ok'); });
+        w.querySelector('[data-p="'+pal+'"]').classList.add('hecha');
+        var n = Object.keys(hechas).length;
+        sm.textContent = n === D.lista.length ? 'Has marcado todas las palabras de la lista. ¿Qué letras han quedado sin marcar?' : '¡Encontrada: '+pal+'! ('+n+' de '+D.lista.length+')';
+      }
+      ini = null; sel = []; pintarSel();
+    }
+    sg.addEventListener('pointerdown', function(ev){ var c = bajo(ev); if(!c) return; ev.preventDefault(); ini = [+c.dataset.r, +c.dataset.c]; sel = [ini]; pintarSel(); try{ sg.setPointerCapture(ev.pointerId); }catch(x){} });
+    sg.addEventListener('pointermove', function(ev){ if(!ini) return; var c = bajo(ev); if(c) linea(ini, [+c.dataset.r, +c.dataset.c]); });
+    sg.addEventListener('pointerup', fin); sg.addEventListener('pointercancel', fin);
+  },
+  deslizante: function(box, e){
+    TIPOS.texto(box, e);
+    var S = 4, T = 400, P = T / S, L = S * S, src = document.createElement('canvas');
+    src.width = src.height = T; dibujarPortada(src.getContext('2d'), T, e.datos.palabra);
+    var cv = document.createElement('canvas'); cv.width = cv.height = T; cv.className = 'desl'; cv.setAttribute('role', 'img'); cv.setAttribute('aria-label', 'Puzzle deslizante de 4 por 4');
+    var info = document.createElement('div'); info.className = 'nota';
+    var bar = document.createElement('button'); bar.type = 'button'; bar.className = 'sec'; bar.textContent = 'Barajar de nuevo';
+    box.appendChild(cv); box.appendChild(info); box.appendChild(bar);
+    var g = cv.getContext('2d'), pos, hueco, mov, hist;
+    function resuelto(){ for(var i = 0; i < L; i++) if(pos[i] !== i) return false; return true; }
+    function vecinos(h){ var r = Math.floor(h / S), c = h % S, v = []; if(r > 0) v.push(h - S); if(r < S - 1) v.push(h + S); if(c > 0) v.push(h - 1); if(c < S - 1) v.push(h + 1); return v; }
+    function mover(i){ var h = hueco; pos[h] = pos[i]; pos[i] = L - 1; hueco = i; hist.push(h); }
+    function nuevo(){
+      pos = []; for(var i = 0; i < L; i++) pos.push(i);
+      hueco = L - 1; mov = 0; hist = []; var prev = -1;
+      for(var k = 0; k < 200 || resuelto(); k++){
+        var v = vecinos(hueco).filter(function(x){ return x !== prev; }), x = v[Math.floor(Math.random() * v.length)];
+        prev = hueco; mover(x);
+      }
+      window.__deslSolucion = function(){ return hist.slice().reverse(); };
+      dibujar();
+    }
+    function dibujar(){
+      var ok = resuelto();
+      g.fillStyle = '#07061a'; g.fillRect(0, 0, T, T);
+      for(var i = 0; i < L; i++){
+        var t = pos[i]; if(t === L - 1 && !ok) continue;
+        g.drawImage(src, (t % S) * P, Math.floor(t / S) * P, P, P, (i % S) * P, Math.floor(i / S) * P, P, P);
+        if(!ok){
+          g.strokeStyle = 'rgba(7,6,26,.9)'; g.lineWidth = 4; g.strokeRect((i % S) * P + 2, Math.floor(i / S) * P + 2, P - 4, P - 4);
+          g.fillStyle = 'rgba(255,255,255,.55)'; g.font = '700 16px system-ui,Arial,sans-serif'; g.textAlign = 'left'; g.fillText(String(t + 1), (i % S) * P + 10, Math.floor(i / S) * P + 24);
+        }
+      }
+      info.textContent = ok ? '¡Completo! Lee la palabra que aparece en la imagen y escríbela abajo.' : 'Movimientos: ' + mov;
+    }
+    cv.addEventListener('click', function(ev){
+      if(resuelto()) return;
+      var r = cv.getBoundingClientRect(), c = Math.floor((ev.clientX - r.left) / r.width * S), f = Math.floor((ev.clientY - r.top) / r.height * S), i = f * S + c;
+      if(vecinos(hueco).indexOf(i) === -1) return;
+      mover(i); mov++; dibujar();
+    });
+    bar.onclick = nuevo; nuevo();
+  },
+  deduccion: function(box, e){
+    TIPOS.texto(box, e);
+    var N = e.datos.nombres, k = N.length, w = document.createElement('div'); w.className = 'cuaderno';
+    var t = '<div class="tt">CUADERNO DEL INVESTIGADOR</div><div class="cg" style="grid-template-columns:72px repeat('+k+',1fr)"><div></div>';
+    for(var j = 1; j <= k; j++) t += '<div class="ch">'+j+'.º</div>';
+    N.forEach(function(n, i){ t += '<div class="cn">'+esc(n)+'</div>'; for(var j = 0; j < k; j++) t += '<button type="button" class="cc" aria-label="'+esc(n)+', posición '+(j + 1)+'"></button>'; });
+    t += '</div><div class="nota">Toca una casilla para marcarla: ✗ descartado, ✓ seguro. Es solo tu cuaderno de notas.</div>';
+    w.innerHTML = t; box.appendChild(w);
+    Array.prototype.forEach.call(w.querySelectorAll('.cc'), function(b){
+      b.onclick = function(){ var v = b.dataset.v || '', nx = v === '' ? 'x' : (v === 'x' ? 'v' : ''); b.dataset.v = nx; b.textContent = nx === 'x' ? '✗' : (nx === 'v' ? '✓' : ''); b.className = 'cc' + (nx ? ' ' + nx : ''); };
+    });
+  },
+  candado: function(box, e){
+    TIPOS.texto(box, e);
+    var n = e.datos.ruedas, v = [], w = document.createElement('div'); w.className = 'candado';
+    var t = '<div class="tt">CANDADO</div><div class="cr">';
+    for(var i = 0; i < n; i++){ v.push(1); t += '<div class="rd"><button type="button" class="ru" aria-label="Subir la rueda '+(i + 1)+'">▲</button><div class="rv"></div><button type="button" class="rb" aria-label="Bajar la rueda '+(i + 1)+'">▼</button><div class="rl"></div></div>'; }
+    t += '</div><div class="nota cp"></div>';
+    w.innerHTML = t; box.appendChild(w);
+    var vs = w.querySelectorAll('.rv'), ls = w.querySelectorAll('.rl'), cp = w.querySelector('.cp');
+    function pintar(){ var pal = ''; for(var i = 0; i < n; i++){ vs[i].textContent = v[i]; ls[i].textContent = ABC[v[i] - 1]; pal += ABC[v[i] - 1]; } cp.textContent = 'Letras del candado: ' + pal; }
+    Array.prototype.forEach.call(w.querySelectorAll('.ru'), function(b, i){ b.onclick = function(){ v[i] = v[i] >= 26 ? 1 : v[i] + 1; pintar(); }; });
+    Array.prototype.forEach.call(w.querySelectorAll('.rb'), function(b, i){ b.onclick = function(){ v[i] = v[i] <= 1 ? 26 : v[i] - 1; pintar(); }; });
+    pintar();
   }
 };
+
+var ABC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function dibujarPortada(g, T, palabra){
+  function caja(x, y, w, hh, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + hh, r); g.arcTo(x + w, y + hh, x, y + hh, r); g.arcTo(x, y + hh, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+  var f = g.createLinearGradient(0, 0, 0, T); f.addColorStop(0, '#1d0c40'); f.addColorStop(1, '#07061a'); g.fillStyle = f; g.fillRect(0, 0, T, T);
+  g.fillStyle = 'rgba(255,255,255,.6)'; for(var i = 0; i < 46; i++){ g.fillRect((i * 97) % T, (i * 53 + 17) % T, 2, 2); }
+  g.fillStyle = '#f3e9c6'; g.beginPath(); g.arc(318, 78, 34, 0, 7); g.fill(); g.fillStyle = '#1d0c40'; g.beginPath(); g.arc(332, 68, 31, 0, 7); g.fill();
+  g.fillStyle = '#5b1030'; caja(66, 112, 268, 236, 16); g.fill(); g.lineWidth = 5; g.strokeStyle = '#d9a441'; g.stroke();
+  g.fillStyle = '#3a0a20'; g.fillRect(66, 124, 28, 212);
+  g.lineWidth = 2; g.strokeStyle = '#d9a441'; caja(110, 132, 206, 196, 8); g.stroke();
+  g.fillStyle = '#ffd37a'; g.font = '800 50px system-ui,Arial,sans-serif'; g.textAlign = 'center'; g.fillText(palabra, 213, 246);
+  g.fillRect(140, 168, 146, 3); g.fillRect(140, 282, 146, 3);
+  g.fillStyle = '#d9a441'; g.beginPath(); g.arc(213, 150, 5, 0, 7); g.fill(); g.beginPath(); g.arc(213, 304, 5, 0, 7); g.fill();
+}
 
 function ocultarBloques(){
   ['bEnigma','bZona','bFinal','bFin'].forEach(function(i){ $(i).style.display='none'; });
@@ -151,14 +314,19 @@ function pintar(st, texto){
   else $('rev').style.display = 'none';
 }
 
+var ACTUAL_ID = null;
 function verEnigma(e){
+  var igual = ACTUAL_ID === e.id; ACTUAL_ID = e.id;
   $('enum').textContent = 'ENIGMA '+e.num+' DE '+e.de; $('etit').textContent = e.titulo;
-  var box = $('ebox'); box.className = ''; box.innerHTML = '';
-  (TIPOS[e.tipo] || TIPOS.texto)(box, e);
-  if(e.modo === 'espejo'){ box.className = 'esp'; $('notaEsp').style.display = 'block'; } else $('notaEsp').style.display = 'none';
+  if(!igual){
+    var box = $('ebox'); box.className = ''; box.innerHTML = '';
+    (TIPOS[e.tipo] || TIPOS.texto)(box, e);
+    if(e.modo === 'espejo'){ box.className = 'esp'; $('notaEsp').style.display = 'block'; } else $('notaEsp').style.display = 'none';
+    $('r').value = '';
+  }
   $('ayudas').innerHTML = e.ayudas.map(function(t, i){ return '<div class="ayuda"><b>Pista '+(i+1)+':</b> '+esc(t)+'</div>'; }).join('');
   $('bayuda').style.display = e.masAyudas ? 'block' : 'none';
-  $('err2').textContent = ''; $('r').value = '';
+  $('err2').textContent = '';
 }
 
 function ir(){

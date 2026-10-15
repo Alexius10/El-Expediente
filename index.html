@@ -78,6 +78,13 @@
   .vela.c0 i{background:#ff7a8a}.vela.c1 i{background:#ffd37a}.vela.c2 i{background:#7ab8ff}.vela.c3 i{background:#7ff0b8}
   .vela.on{border-color:#fff}.vela.on b{background:#fff3a8;box-shadow:0 0 26px 10px rgba(255,211,122,.85)}
   .vela:disabled{opacity:1}
+  .bloq{margin:6px 0 0;padding:10px 12px;border-radius:10px;background:rgba(255,211,122,.12);border:1px solid #ffd37a;color:#ffe3a6;font-size:14px;text-align:left}
+  .bloq.ok{background:rgba(127,240,184,.12);border-color:#7ff0b8;color:#7ff0b8}
+  .ord{margin-top:12px;padding:12px;border:1px dashed #6c5aa8;border-radius:12px}
+  .orow{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .orow .on{width:34px;font-size:13px;color:#d2c8f5}
+  .orow .nm{flex:1;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.08);font-weight:700}
+  .orow button{width:44px;margin:0;padding:8px 0;font-size:15px}
   .sil{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0;min-height:44px}
   .sil span{padding:8px 14px;border-radius:10px;border:1px solid #ff46c8;background:rgba(255,70,200,.18);font-weight:800;letter-spacing:.08em}
 </style></head><body><div class="w">
@@ -107,6 +114,7 @@
     <div id="ayudas"></div>
     <button class="sec" id="bayuda" onclick="pedirAyuda()">Necesito una pista</button>
     <div class="sep"></div>
+    <div class="nota bloq" id="nbloq" style="display:none"></div>
     <label for="r">Tu respuesta</label><input id="r" autocomplete="off" placeholder="Escribe la respuesta">
     <button id="bc" onclick="comprobar()">Comprobar respuesta</button><div class="err" id="err2"></div>
   </div>
@@ -153,6 +161,20 @@ function llamar(cuerpo, ok, fallo){
 }
 try { C = localStorage.getItem('exp_c') || ''; M = localStorage.getItem('exp_m') || ''; $('c').value = C; $('m').value = M; } catch(e){}
 
+var PUERTA = true;
+function puerta(abierta, msg){
+  if(abierta && PUERTA === true && $('nbloq').dataset.listo === '1') return;
+  PUERTA = abierta; $('r').disabled = !abierta; $('bc').disabled = !abierta;
+  var n = $('nbloq');
+  if(abierta === 'libre'){ n.style.display = 'none'; n.dataset.listo = ''; PUERTA = true; $('r').disabled = false; $('bc').disabled = false; return; }
+  n.style.display = 'block'; n.className = 'nota bloq' + (abierta ? ' ok' : ''); n.dataset.listo = abierta ? '1' : '';
+  n.textContent = abierta ? (msg || '¡Puzle completado! Ya puedes escribir la palabra.') : (msg || 'Completa el puzle para poder escribir la respuesta.');
+}
+function hpal(s){
+  s = String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z]/g, '');
+  var x = 0; for(var i = 0; i < s.length; i++) x = (x * 31 + s.charCodeAt(i)) >>> 0; return x;
+}
+
 /* Cada tipo de enigma sabe dibujarse. Los puzzles nuevos se añaden aquí. */
 var TIPOS = {
   texto: function(box, e){
@@ -191,6 +213,7 @@ var TIPOS = {
     for(var r = 0; r < N; r++) for(var c = 0; c < N; c++) t += '<div class="sc" data-r="'+r+'" data-c="'+c+'">'+D.rejilla[r][c]+'</div>';
     t += '</div><div class="nota sm">Arrastra el dedo sobre las letras para marcar una palabra.</div>';
     w.innerHTML = t; box.appendChild(w);
+    puerta(false, 'Encuentra las 8 palabras de la lista para poder escribir la respuesta.');
     var sg = w.querySelector('.sopa'), sm = w.querySelector('.sm');
     function celda(r, c){ return sg.children[r * N + c]; }
     function bajo(ev){ var el = document.elementFromPoint(ev.clientX, ev.clientY); return el && el.classList && el.classList.contains('sc') ? el : null; }
@@ -212,6 +235,7 @@ var TIPOS = {
         w.querySelector('[data-p="'+pal+'"]').classList.add('hecha');
         var n = Object.keys(hechas).length;
         sm.textContent = n === D.lista.length ? 'Has marcado todas las palabras de la lista. ¿Qué letras han quedado sin marcar?' : '¡Encontrada: '+pal+'! ('+n+' de '+D.lista.length+')';
+        if(n === D.lista.length) puerta(true, '¡Lista completa! Ahora escribe la palabra escondida.');
       }
       ini = null; sel = []; pintarSel();
     }
@@ -227,6 +251,7 @@ var TIPOS = {
     var info = document.createElement('div'); info.className = 'nota';
     var bar = document.createElement('button'); bar.type = 'button'; bar.className = 'sec'; bar.textContent = 'Barajar de nuevo';
     box.appendChild(cv); box.appendChild(info); box.appendChild(bar);
+    puerta(false, 'Completa el puzle para poder escribir la respuesta.');
     var g = cv.getContext('2d'), pos, hueco, mov, hist;
     function resuelto(){ for(var i = 0; i < L; i++) if(pos[i] !== i) return false; return true; }
     function vecinos(h){ var r = Math.floor(h / S), c = h % S, v = []; if(r > 0) v.push(h - S); if(r < S - 1) v.push(h + S); if(c > 0) v.push(h - 1); if(c < S - 1) v.push(h + 1); return v; }
@@ -253,6 +278,7 @@ var TIPOS = {
         }
       }
       info.textContent = ok ? '¡Completo! Lee la palabra que aparece en la imagen y escríbela abajo.' : 'Movimientos: ' + mov;
+      if(ok) puerta(true, '¡Imagen completa! Escribe la palabra que lees.');
     }
     cv.addEventListener('click', function(ev){
       if(resuelto()) return;
@@ -273,6 +299,18 @@ var TIPOS = {
     Array.prototype.forEach.call(w.querySelectorAll('.cc'), function(b){
       b.onclick = function(){ var v = b.dataset.v || '', nx = v === '' ? 'x' : (v === 'x' ? 'v' : ''); b.dataset.v = nx; b.textContent = nx === 'x' ? '✗' : (nx === 'v' ? '✓' : ''); b.className = 'cc' + (nx ? ' ' + nx : ''); };
     });
+    puerta(false, 'Coloca a los testigos en su orden de llegada para poder escribir la respuesta.');
+    var orden = N.slice(), od = document.createElement('div'); od.className = 'ord'; box.appendChild(od);
+    function pintarOrden(){
+      var t = '<div class="tt">ORDEN DE LLEGADA</div>';
+      orden.forEach(function(n, i){ t += '<div class="orow"><span class="on">' + (i + 1) + '.º</span><span class="nm">' + esc(n) + '</span><button type="button" class="sec ou" aria-label="Subir a ' + esc(n) + '"' + (i === 0 ? ' disabled' : '') + '>▲</button><button type="button" class="sec odn" aria-label="Bajar a ' + esc(n) + '"' + (i === k - 1 ? ' disabled' : '') + '>▼</button></div>'; });
+      od.innerHTML = t;
+      Array.prototype.forEach.call(od.querySelectorAll('.ou'), function(b, i){ b.onclick = function(){ var x = orden[i]; orden[i] = orden[i - 1]; orden[i - 1] = x; pintarOrden(); }; });
+      Array.prototype.forEach.call(od.querySelectorAll('.odn'), function(b, i){ b.onclick = function(){ var x = orden[i]; orden[i] = orden[i + 1]; orden[i + 1] = x; pintarOrden(); }; });
+      var pal = orden.filter(function(n, i){ return i % 2 === 0; }).map(function(n){ return n.charAt(0); }).join('');
+      if(hpal(pal) === e.datos.h) puerta(true, '¡Este orden cumple todas las pistas! Escribe la palabra que forman las iniciales.');
+    }
+    pintarOrden();
   },
   candado: function(box, e){
     TIPOS.texto(box, e);
@@ -282,7 +320,8 @@ var TIPOS = {
     t += '</div><div class="nota cp"></div>';
     w.innerHTML = t; box.appendChild(w);
     var vs = w.querySelectorAll('.rv'), ls = w.querySelectorAll('.rl'), cp = w.querySelector('.cp');
-    function pintar(){ var pal = ''; for(var i = 0; i < n; i++){ vs[i].textContent = v[i]; ls[i].textContent = ABC[v[i] - 1]; pal += ABC[v[i] - 1]; } cp.textContent = 'Letras del candado: ' + pal; }
+    puerta(false, 'Abre el candado para poder escribir la respuesta.');
+    function pintar(){ var pal = ''; for(var i = 0; i < n; i++){ vs[i].textContent = v[i]; ls[i].textContent = ABC[v[i] - 1]; pal += ABC[v[i] - 1]; } cp.textContent = 'Letras del candado: ' + pal; if(hpal(pal) === e.datos.h) puerta(true, '¡Clac! El candado se abre. Escribe la palabra que forman las letras.'); }
     Array.prototype.forEach.call(w.querySelectorAll('.ru'), function(b, i){ b.onclick = function(){ v[i] = v[i] >= 26 ? 1 : v[i] + 1; pintar(); }; });
     Array.prototype.forEach.call(w.querySelectorAll('.rb'), function(b, i){ b.onclick = function(){ v[i] = v[i] <= 1 ? 26 : v[i] - 1; pintar(); }; });
     pintar();
@@ -308,7 +347,12 @@ var TIPOS = {
     });
     t += '</div><div class="nota">Escribe una letra bajo cada símbolo y se pondrá sola en todo el epitafio. Las letras en verde ya las conoces.</div>';
     w.innerHTML = t; box.appendChild(w);
-    function pintar(){ Array.prototype.forEach.call(w.querySelectorAll('.lt'), function(el){ el.textContent = letra[el.dataset.g] || ''; }); }
+    puerta(false, 'Descifra la palabra dorada para poder escribir la respuesta.');
+    function pintar(){
+      Array.prototype.forEach.call(w.querySelectorAll('.lt'), function(el){ el.textContent = letra[el.dataset.g] || ''; });
+      var oro = D.lineas[D.marcar[0]][D.marcar[1]], pal = oro.map(function(g){ return letra[g] || '?'; }).join('');
+      if(pal.indexOf('?') === -1 && hpal(pal) === D.h) puerta(true, '¡Epitafio descifrado! Escribe la palabra dorada.');
+    }
     Array.prototype.forEach.call(w.querySelectorAll('.tabla input:not(:disabled)'), function(inp){
       inp.addEventListener('input', function(){ var v = inp.value.toUpperCase().replace(/[^A-ZÑ]/g, ''); inp.value = v; if(v) letra[inp.dataset.g] = v; else delete letra[inp.dataset.g]; pintar(); });
     });
@@ -321,6 +365,7 @@ var TIPOS = {
     for(var i = 0; i < N; i++) t += '<button type="button" class="vela c' + i + '" aria-label="Vela ' + (i + 1) + '" disabled><i></i><b></b></button>';
     t += '</div><div class="nota" id="sqm"></div><div class="sil" id="sqs"></div><button type="button" class="sec" id="sqb">Empezar</button>';
     w.innerHTML = t; box.appendChild(w);
+    puerta(false, 'Supera las 3 rondas del hechizo para poder escribir la respuesta.');
     var velas = w.querySelectorAll('.vela'), msg = w.querySelector('#sqm'), rr = w.querySelector('#sqr'), sil = w.querySelector('#sqs'), btn = w.querySelector('#sqb'), hechas = [];
     function vivo(){ return document.body.contains(w); }
     function marcar(on){ Array.prototype.forEach.call(velas, function(v){ v.disabled = !on; }); }
@@ -343,7 +388,7 @@ var TIPOS = {
         pos++;
         if(pos < seq.length) return;
         hechas.push(D.rondas[ronda].silaba); pintarSil(); marcar(false); ronda++;
-        if(ronda >= D.rondas.length){ listo = true; rr.textContent = 'HECHIZO COMPLETO'; btn.style.display = 'none'; msg.textContent = 'El hechizo está completo. Escribe abajo la palabra que forman las sílabas, en el orden en que han salido.'; return; }
+        if(ronda >= D.rondas.length){ listo = true; rr.textContent = 'HECHIZO COMPLETO'; btn.style.display = 'none'; msg.textContent = 'El hechizo está completo. Escribe abajo la palabra que forman las sílabas, en el orden en que han salido.'; puerta(true, '¡Hechizo completo! Escribe la palabra que forman las sílabas.'); return; }
         msg.textContent = '¡Bien! Sílaba conseguida. Prepárate para la siguiente ronda.'; btn.textContent = 'Siguiente ronda'; btn.disabled = false; nueva();
       });
     });
@@ -410,7 +455,7 @@ function verEnigma(e){
   var igual = ACTUAL_ID === e.id; ACTUAL_ID = e.id;
   $('enum').textContent = 'ENIGMA '+e.num+' DE '+e.de; $('etit').textContent = e.titulo;
   if(!igual){
-    var box = $('ebox'); box.className = ''; box.innerHTML = '';
+    var box = $('ebox'); box.className = ''; box.innerHTML = ''; puerta('libre');
     (TIPOS[e.tipo] || TIPOS.texto)(box, e);
     if(e.modo === 'espejo'){ box.className = 'esp'; $('notaEsp').style.display = 'block'; } else $('notaEsp').style.display = 'none';
     $('r').value = '';
@@ -440,14 +485,14 @@ function comprobar(){
   var v = $('r').value.trim(); if(!v){ e.textContent = 'Escribe tu respuesta.'; return; }
   var b = $('bc'); b.disabled = true; b.textContent = 'Comprobando…';
   llamar({a:'resp', c:C, m:M, id:ST.actual.id, v:v}, function(r){
-    b.disabled = false; b.textContent = 'Comprobar respuesta';
+    b.disabled = !PUERTA; b.textContent = 'Comprobar respuesta';
     if(!r.ok){ e.textContent = r.msg; return; }
     if(!r.correcta){
       pintar(r.estado); $('err2').textContent = 'Respuesta incorrecta. Inténtalo de nuevo ('+r.quedan+' intentos restantes).'; return;
     }
     pintar(r.estado, r.palabra ? '¡Correcto! Palabra '+r.palabra.n+' de 8: '+r.palabra.palabra : '¡Correcto!');
     window.scrollTo(0, 0);
-  }, function(){ b.disabled = false; b.textContent = 'Comprobar respuesta'; e.textContent = 'No se pudo comprobar. Inténtalo de nuevo.'; });
+  }, function(){ b.disabled = !PUERTA; b.textContent = 'Comprobar respuesta'; e.textContent = 'No se pudo comprobar. Inténtalo de nuevo.'; });
 }
 
 function pedirAyuda(){

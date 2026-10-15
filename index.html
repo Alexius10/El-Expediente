@@ -59,6 +59,27 @@
   .rd button{width:56px;margin:0;padding:8px 0;font-size:16px}
   .rv{font-size:26px;font-weight:800;min-width:56px;text-align:center;background:#14102a;border:1px solid #6c5aa8;border-radius:8px;padding:6px 0}
   .rl{font-size:20px;font-weight:800;color:#ff78d7}
+  .epi{margin-top:16px;padding:14px 10px;border:2px solid #6c5aa8;border-radius:14px;background:linear-gradient(#1b1535,#0f0b22);text-align:center}
+  .epl{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 16px;margin:8px 0}
+  .epw{display:flex;gap:3px}
+  .epc{display:flex;flex-direction:column;align-items:center;width:32px}
+  .epc svg{width:30px;height:30px;stroke:#e8dfff;stroke-width:.2;fill:none}
+  .epc .lt{font-size:15px;font-weight:800;color:#ff9be3;height:20px;line-height:20px;border-bottom:2px solid #6c5aa8;width:100%}
+  .epc.ref svg{stroke:#ffd37a} .epc.ref .lt{border-bottom-color:#ffd37a;color:#ffd37a}
+  .tabla{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:8px;margin-top:14px}
+  .tabla div{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .tabla svg{width:34px;height:34px;stroke:#e8dfff;stroke-width:.2;fill:none}
+  .tabla input{width:40px;height:36px;padding:0;text-align:center;font-size:18px;font-weight:800;text-transform:uppercase;border-radius:8px}
+  .tabla input:disabled{background:rgba(127,240,184,.16);border-color:#7ff0b8;color:#7ff0b8;opacity:1}
+  .velas{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0 6px}
+  .vela{margin:0;padding:0;height:110px;border-radius:14px;background:#14102a;border:2px solid #3a2f66;position:relative;overflow:hidden}
+  .vela i{position:absolute;left:50%;bottom:12px;width:20px;height:56px;margin-left:-10px;border-radius:4px;background:#e8dfff}
+  .vela b{position:absolute;left:50%;bottom:68px;width:12px;height:22px;margin-left:-6px;border-radius:50% 50% 50% 50%/65% 65% 35% 35%;background:#3a2f66;transition:background .12s,box-shadow .12s}
+  .vela.c0 i{background:#ff7a8a}.vela.c1 i{background:#ffd37a}.vela.c2 i{background:#7ab8ff}.vela.c3 i{background:#7ff0b8}
+  .vela.on{border-color:#fff}.vela.on b{background:#fff3a8;box-shadow:0 0 26px 10px rgba(255,211,122,.85)}
+  .vela:disabled{opacity:1}
+  .sil{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0;min-height:44px}
+  .sil span{padding:8px 14px;border-radius:10px;border:1px solid #ff46c8;background:rgba(255,70,200,.18);font-weight:800;letter-spacing:.08em}
 </style></head><body><div class="w">
 <div class="peq">HALLOWEEN · EGO SPORT CENTER</div><h1>EL EXPEDIENTE</h1>
 <div class="sub" id="cab"></div>
@@ -265,8 +286,78 @@ var TIPOS = {
     Array.prototype.forEach.call(w.querySelectorAll('.ru'), function(b, i){ b.onclick = function(){ v[i] = v[i] >= 26 ? 1 : v[i] + 1; pintar(); }; });
     Array.prototype.forEach.call(w.querySelectorAll('.rb'), function(b, i){ b.onclick = function(){ v[i] = v[i] <= 1 ? 26 : v[i] - 1; pintar(); }; });
     pintar();
+  },
+  simbolos: function(box, e){
+    TIPOS.texto(box, e);
+    var D = e.datos, letra = {}, w = document.createElement('div'), t = '', usados = [];
+    Object.keys(D.clave).forEach(function(k){ letra[k] = D.clave[k]; });
+    t += '<div class="epi"><div class="tt">EPITAFIO</div>';
+    D.lineas.forEach(function(l, li){
+      t += '<div class="epl">';
+      l.forEach(function(pal, wi){
+        t += '<div class="epw' + (D.marcar && D.marcar[0] === li && D.marcar[1] === wi ? ' ref' : '') + '">';
+        pal.forEach(function(g){ if(usados.indexOf(g) === -1) usados.push(g); t += '<div class="epc' + (D.marcar && D.marcar[0] === li && D.marcar[1] === wi ? ' ref' : '') + '">' + glifo(g) + '<div class="lt" data-g="' + g + '"></div></div>'; });
+        t += '</div>';
+      });
+      t += '</div>';
+    });
+    t += '</div><div class="tt" style="margin-top:14px">TU TABLA DE LETRAS</div><div class="tabla">';
+    usados.sort(function(a, b){ return a - b; }).forEach(function(g){
+      var dada = D.clave[g] !== undefined;
+      t += '<div>' + glifo(g) + '<input maxlength="1" data-g="' + g + '" autocomplete="off" aria-label="Letra del símbolo ' + (g + 1) + '"' + (dada ? ' disabled value="' + D.clave[g] + '"' : '') + '></div>';
+    });
+    t += '</div><div class="nota">Escribe una letra bajo cada símbolo y se pondrá sola en todo el epitafio. Las letras en verde ya las conoces.</div>';
+    w.innerHTML = t; box.appendChild(w);
+    function pintar(){ Array.prototype.forEach.call(w.querySelectorAll('.lt'), function(el){ el.textContent = letra[el.dataset.g] || ''; }); }
+    Array.prototype.forEach.call(w.querySelectorAll('.tabla input:not(:disabled)'), function(inp){
+      inp.addEventListener('input', function(){ var v = inp.value.toUpperCase().replace(/[^A-ZÑ]/g, ''); inp.value = v; if(v) letra[inp.dataset.g] = v; else delete letra[inp.dataset.g]; pintar(); });
+    });
+    pintar();
+  },
+  secuencia: function(box, e){
+    TIPOS.texto(box, e);
+    var D = e.datos, N = D.velas, ronda = 0, seq = [], pos = 0, ocupado = false, listo = false, w = document.createElement('div');
+    var t = '<div class="tt" id="sqr"></div><div class="velas">';
+    for(var i = 0; i < N; i++) t += '<button type="button" class="vela c' + i + '" aria-label="Vela ' + (i + 1) + '" disabled><i></i><b></b></button>';
+    t += '</div><div class="nota" id="sqm"></div><div class="sil" id="sqs"></div><button type="button" class="sec" id="sqb">Empezar</button>';
+    w.innerHTML = t; box.appendChild(w);
+    var velas = w.querySelectorAll('.vela'), msg = w.querySelector('#sqm'), rr = w.querySelector('#sqr'), sil = w.querySelector('#sqs'), btn = w.querySelector('#sqb'), hechas = [];
+    function vivo(){ return document.body.contains(w); }
+    function marcar(on){ Array.prototype.forEach.call(velas, function(v){ v.disabled = !on; }); }
+    function encender(i, ms, fin){ velas[i].classList.add('on'); setTimeout(function(){ velas[i].classList.remove('on'); setTimeout(fin, 260); }, ms); }
+    function reproducir(){
+      if(!vivo()) return; ocupado = true; marcar(false); btn.disabled = true; msg.textContent = 'Mira con atención…'; var k = 0;
+      (function paso(){ if(!vivo()) return; if(k >= seq.length){ ocupado = false; marcar(true); btn.disabled = false; btn.textContent = 'Ver la secuencia otra vez'; msg.textContent = 'Ahora repítela tocando las velas en el mismo orden.'; pos = 0; return; } encender(seq[k++], 600, paso); })();
+    }
+    function nueva(){
+      var largo = D.rondas[ronda].largo; seq = []; var prev = -1;
+      for(var i = 0; i < largo; i++){ var x; do { x = Math.floor(Math.random() * N); } while(x === prev && Math.random() < .7); seq.push(x); prev = x; }
+      window.__secuencia = function(){ return seq.slice(); };
+      pos = 0; rr.textContent = 'RONDA ' + (ronda + 1) + ' DE ' + D.rondas.length + ' · ' + largo + ' VELAS';
+    }
+    function pintarSil(){ sil.innerHTML = hechas.map(function(s){ return '<span>' + esc(s) + '</span>'; }).join(''); }
+    Array.prototype.forEach.call(velas, function(v, i){
+      v.addEventListener('click', function(){
+        if(ocupado || listo) return; v.classList.add('on'); setTimeout(function(){ v.classList.remove('on'); }, 220);
+        if(i !== seq[pos]){ msg.textContent = 'Esa no era. La vela se apaga y el hechizo cambia: empieza la ronda otra vez.'; marcar(false); btn.textContent = 'Empezar la ronda'; btn.disabled = false; nueva(); return; }
+        pos++;
+        if(pos < seq.length) return;
+        hechas.push(D.rondas[ronda].silaba); pintarSil(); marcar(false); ronda++;
+        if(ronda >= D.rondas.length){ listo = true; rr.textContent = 'HECHIZO COMPLETO'; btn.style.display = 'none'; msg.textContent = 'El hechizo está completo. Escribe abajo la palabra que forman las sílabas, en el orden en que han salido.'; return; }
+        msg.textContent = '¡Bien! Sílaba conseguida. Prepárate para la siguiente ronda.'; btn.textContent = 'Siguiente ronda'; btn.disabled = false; nueva();
+      });
+    });
+    btn.onclick = function(){ if(btn.textContent === 'Ver la secuencia otra vez' || btn.textContent === 'Empezar' || btn.textContent === 'Empezar la ronda' || btn.textContent === 'Siguiente ronda') reproducir(); };
+    nueva(); msg.textContent = 'Pulsa «Empezar»: las velas se encenderán en un orden que tendrás que repetir.';
   }
 };
+
+function glifo(g){
+  var d = GLIFOS[g], p = d.l.map(function(q, i){ return (i ? 'L' : 'M') + (q[0] * 0.35 + 0.15).toFixed(2) + ' ' + (q[1] * 0.35 + 0.15).toFixed(2); }).join(' ');
+  var dot = d.d ? '<circle cx="' + (d.d[0] * 0.35 + 0.15).toFixed(2) + '" cy="' + (d.d[1] * 0.35 + 0.15).toFixed(2) + '" r=".09" fill="currentColor" stroke="none"/>' : '';
+  return '<svg viewBox="0 0 1 1" aria-hidden="true"><path d="' + p + '" stroke-linecap="round" stroke-linejoin="round" style="stroke-width:.1"/>' + dot + '</svg>';
+}
+var GLIFOS = [{"l":[[2,2],[2,0],[2,1]],"d":[0,0]},{"l":[[2,1],[1,0],[2,0]],"d":null},{"l":[[0,1],[1,1],[2,1]],"d":[1,2]},{"l":[[2,2],[0,1],[1,2],[2,1]],"d":null},{"l":[[0,0],[1,0],[1,1],[2,0]],"d":null},{"l":[[1,1],[0,2],[1,2]],"d":[0,1]},{"l":[[1,0],[2,0],[0,0]],"d":[2,1]},{"l":[[0,1],[0,2],[1,1],[2,2]],"d":[1,2]},{"l":[[0,2],[1,2],[2,1]],"d":[1,0]},{"l":[[2,2],[0,1],[1,1]],"d":[2,1]},{"l":[[2,0],[1,0],[1,2],[0,0]],"d":[1,1]},{"l":[[1,1],[0,2],[2,0]],"d":null},{"l":[[0,2],[0,1],[2,2]],"d":null},{"l":[[0,2],[1,1],[1,2],[2,1]],"d":[2,0]},{"l":[[2,1],[1,0],[0,2],[0,1]],"d":[2,2]},{"l":[[0,1],[2,0],[0,0]],"d":[1,1]},{"l":[[2,1],[0,2],[0,0],[1,1]],"d":[2,2]}];
 
 var ABC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 function dibujarPortada(g, T, palabra){

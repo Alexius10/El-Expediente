@@ -27,7 +27,7 @@
   .rev{margin-top:16px;padding:16px;border-radius:14px;border:2px solid #7ff0b8;background:rgba(127,240,184,.1)}
   .rev .num{color:#7ff0b8}
   .frase{font-size:19px;line-height:2.1;margin-top:6px}
-  .slot{display:inline-block;width:auto;margin:0 2px;padding:2px 10px;min-width:76px;border-radius:8px;background:#14102a;border:2px dashed #6c5aa8;color:#fff;font-size:16px;font-weight:700}
+  .slot{display:inline-block;width:auto;margin:0 2px;padding:7px 10px;min-height:38px;line-height:1.2;vertical-align:middle;min-width:76px;border-radius:8px;background:#14102a;border:2px dashed #6c5aa8;color:#fff;font-size:16px;font-weight:700}
   .slot.fill{border:2px solid #ff46c8;background:rgba(255,70,200,.2)}
   .slot.sel{border-color:#7ff0b8}
   .banco{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
@@ -62,8 +62,8 @@
   .epi{margin-top:16px;padding:14px 10px;border:2px solid #6c5aa8;border-radius:14px;background:linear-gradient(#1b1535,#0f0b22);text-align:center}
   .epl{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 16px;margin:8px 0}
   .epw{display:flex;gap:3px}
-  .epc{display:flex;flex-direction:column;align-items:center;width:32px}
-  .epc svg{width:30px;height:30px;stroke:#e8dfff;stroke-width:.2;fill:none}
+  .epc{display:flex;flex-direction:column;align-items:center;width:clamp(20px,calc((100vw - 130px) / 9),32px)}
+  .epc svg{width:94%;height:auto;aspect-ratio:1/1;stroke:#e8dfff;stroke-width:.2;fill:none}
   .epc .lt{font-size:15px;font-weight:800;color:#ff9be3;height:20px;line-height:20px;border-bottom:2px solid #6c5aa8;width:100%}
   .epc.ref svg{stroke:#ffd37a} .epc.ref .lt{border-bottom-color:#ffd37a;color:#ffd37a}
   .tabla{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:8px;margin-top:14px}
@@ -104,8 +104,8 @@
 
 <div class="caja" id="entrada">
   <div>Introduce tu código de investigador para abrir la zona.</div>
-  <label for="c">Código</label><input id="c" autocomplete="off" autocapitalize="characters" placeholder="EXP-XXXX">
-  <label for="m">Correo electrónico</label><input id="m" type="email" autocomplete="email" placeholder="el correo con el que te inscribiste">
+  <label for="c">Código</label><input id="c" autocomplete="off" autocapitalize="characters" enterkeyhint="next" placeholder="EXP-XXXX">
+  <label for="m">Correo electrónico</label><input id="m" type="email" autocomplete="email" enterkeyhint="go" placeholder="el correo con el que te inscribiste">
   <button id="bt" onclick="ir()">Abrir la zona</button><div class="err" id="err"></div>
   <div class="nota">Solo mayores de edad inscritos en el juego.</div>
   <div class="nota">⚠ Este juego contiene sustos: sonido fuerte e imágenes repentinas.</div>
@@ -128,7 +128,7 @@
     <button class="sec" id="bayuda" onclick="pedirAyuda()">Necesito una pista</button>
     <div class="sep"></div>
     <div class="nota bloq" id="nbloq" style="display:none"></div>
-    <label for="r">Tu respuesta</label><input id="r" autocomplete="off" placeholder="Escribe la respuesta">
+    <label for="r">Tu respuesta</label><input id="r" autocomplete="off" enterkeyhint="send" placeholder="Escribe la respuesta">
     <button id="bc" onclick="comprobar()">Comprobar respuesta</button><div class="err" id="err2"></div>
   </div>
 
@@ -172,8 +172,13 @@ var ZONA = (function(){
 var C = '', M = '', ST = null, FILL = [], SEL = 0;
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function llamar(cuerpo, ok, fallo){
-  fetch(API, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(cuerpo), credentials:'omit', redirect:'follow'})
-    .then(function(r){ return r.json(); }).then(ok).catch(fallo);
+  // Si el servidor no contesta en 45 s se avisa y se libera el botón (repetir una respuesta ya acertada no cuesta nada).
+  var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null, fin = false;
+  var reloj = setTimeout(function(){ if(fin) return; fin = true; if(ctl){ try{ ctl.abort(); }catch(e){} } fallo(); }, 45000);
+  fetch(API, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(cuerpo), credentials:'omit', redirect:'follow', signal: ctl ? ctl.signal : undefined})
+    .then(function(r){ return r.json(); })
+    .then(function(r){ if(fin) return; fin = true; clearTimeout(reloj); try { ok(r); } catch(e){ fallo(); } })
+    .catch(function(){ if(fin) return; fin = true; clearTimeout(reloj); fallo(); });
 }
 try { C = localStorage.getItem('exp_c') || ''; M = localStorage.getItem('exp_m') || ''; $('c').value = C; $('m').value = M; } catch(e){}
 
@@ -593,6 +598,11 @@ function comprobar(){
     SUSTO.trasAcierto(r.palabra ? r.palabra.n : 0);
   }, function(){ b.disabled = !PUERTA; b.textContent = 'Comprobar respuesta'; e.textContent = 'No se pudo comprobar. Inténtalo de nuevo.'; });
 }
+
+function intro(id, fn){ $(id).addEventListener('keydown', function(ev){ if(ev.key === 'Enter'){ ev.preventDefault(); fn(); } }); }
+intro('c', function(){ $('m').focus(); });
+intro('m', function(){ if(!$('bt').disabled) ir(); });
+intro('r', function(){ if(!$('bc').disabled) comprobar(); });
 
 function pedirAyuda(){
   var b = $('bayuda'); b.disabled = true;
